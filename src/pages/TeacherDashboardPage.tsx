@@ -1,14 +1,58 @@
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
+import { useExamStore } from "@/stores/exam-store";
+
+const createExamSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  duration_minutes: z
+    .number()
+    .int("Duration must be an integer")
+    .positive("Duration must be greater than 0"),
+});
+
+type CreateExamValues = z.infer<typeof createExamSchema>;
 
 export function TeacherDashboardPage() {
   const navigate = useNavigate();
+
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const loading = useAuthStore((s) => s.loading);
+  const authLoading = useAuthStore((s) => s.loading);
+
+  const {
+    exams,
+    loading: examsLoading,
+    errorMessage,
+    fetchExams,
+    createExam,
+  } = useExamStore();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchExams({ createdBy: user.id });
+  }, [fetchExams, user?.id]);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateExamValues>({
+    resolver: zodResolver(createExamSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      duration_minutes: 60,
+    },
+  });
 
   const handleLogout = async () => {
     try {
@@ -20,8 +64,25 @@ export function TeacherDashboardPage() {
     }
   };
 
+  const onSubmit = async (values: CreateExamValues) => {
+    if (!user?.id) return;
+
+    await createExam({
+      title: values.title,
+      description: values.description,
+      duration_minutes: values.duration_minutes,
+      createdBy: user.id,
+      is_published: false,
+    });
+
+    reset();
+  };
+
+  const isCreating = isSubmitting || examsLoading;
+
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">
@@ -35,18 +96,147 @@ export function TeacherDashboardPage() {
         <Button
           onClick={handleLogout}
           variant="secondary"
-          disabled={loading}
+          disabled={authLoading}
           className="w-full sm:w-auto"
         >
-          {loading ? "Logging out..." : "Logout"}
+          {authLoading ? "Logging out..." : "Logout"}
         </Button>
       </div>
 
+      {/* Create exam */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-sm text-slate-600">
-          Teacher features (create exams/assignments, review submissions) will
-          be added here in V1.
-        </p>
+        <div className="mb-3">
+          <h2 className="text-lg font-semibold text-slate-900">Create Exam</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Create a new TOEIC exam. Questions editor comes later.
+          </p>
+        </div>
+
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-1">
+            <label
+              className="text-sm font-medium text-slate-800"
+              htmlFor="title"
+            >
+              Title
+            </label>
+            <input
+              id="title"
+              type="text"
+              placeholder="e.g. TOEIC Mock Test 1"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              {...register("title")}
+            />
+            {errors.title?.message ? (
+              <p className="text-xs text-red-600">{errors.title.message}</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1">
+            <label
+              className="text-sm font-medium text-slate-800"
+              htmlFor="description"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              placeholder="Short description for students..."
+              rows={4}
+              className="w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              {...register("description")}
+            />
+            {errors.description?.message ? (
+              <p className="text-xs text-red-600">
+                {errors.description.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1">
+            <label
+              className="text-sm font-medium text-slate-800"
+              htmlFor="duration_minutes"
+            >
+              Duration (minutes)
+            </label>
+            <input
+              id="duration_minutes"
+              type="number"
+              inputMode="numeric"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              {...register("duration_minutes", { valueAsNumber: true })}
+            />
+            {errors.duration_minutes?.message ? (
+              <p className="text-xs text-red-600">
+                {errors.duration_minutes.message}
+              </p>
+            ) : null}
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isCreating}
+            className="w-full sm:w-auto"
+          >
+            {isCreating ? "Creating..." : "Create Exam"}
+          </Button>
+
+          {errorMessage ? (
+            <p className="text-sm text-red-600">{errorMessage}</p>
+          ) : null}
+        </form>
+      </div>
+
+      {/* Exams list */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-900">Your Exams</h2>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={!user?.id || examsLoading}
+            onClick={() => user?.id && fetchExams({ createdBy: user.id })}
+          >
+            {examsLoading ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
+
+        {examsLoading ? (
+          <div className="py-6 text-sm text-slate-600">Loading exams...</div>
+        ) : exams.length === 0 ? (
+          <div className="py-6 text-sm text-slate-600">
+            No exams yet. Create your first exam above.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {exams.map((exam) => (
+              <div
+                key={exam.id}
+                className="rounded-lg border border-slate-200 bg-white p-3"
+              >
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {exam.title}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {exam.duration_minutes} minutes
+                    </p>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    {exam.is_published ? "Published" : "Unpublished"}
+                  </div>
+                </div>
+                {exam.description ? (
+                  <p className="mt-2 text-sm text-slate-600">
+                    {exam.description}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
