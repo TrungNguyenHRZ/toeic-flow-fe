@@ -9,6 +9,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ResultPage } from "@/pages/ResultPage";
 import { TeacherDashboardPage } from "@/pages/TeacherDashboardPage";
+import { ExamDetailPage } from "@/pages/ExamDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +29,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <TeacherDashboardPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "teacher/exams/:examId",
+        element: (
+          <ProtectedRoute>
+            <ExamDetailPage />
           </ProtectedRoute>
         ),
       },

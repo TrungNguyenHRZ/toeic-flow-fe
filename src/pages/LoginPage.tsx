@@ -44,7 +44,7 @@ export function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       await login(values);
-      toast.success("Đăng nhập thành công");
+      toast.success("Logged in successfully");
       navigate("/teacher", { replace: true });
     } catch (err) {
       toast.error("Email hoặc mật khẩu không chính xác");

@@ -14,6 +14,6 @@ void useAuthStore.getState().initAuth();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-    <Toaster richColors />
+    <Toaster richColors position="top-right" />
   </React.StrictMode>,
 );

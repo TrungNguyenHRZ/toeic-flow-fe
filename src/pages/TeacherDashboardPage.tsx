@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/stores/auth-store";
 import { useExamStore } from "@/stores/exam-store";
 
@@ -20,6 +21,55 @@ const createExamSchema = z.object({
 
 type CreateExamValues = z.infer<typeof createExamSchema>;
 
+function DeleteExamInline(props: {
+  examId: string;
+  onDelete: () => Promise<void>;
+}) {
+  const { examId: _examId, onDelete } = props;
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const title = "Delete this exam?";
+  const description =
+    "This is a soft delete. The exam will be removed from the list immediately.";
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="destructive"
+        className="w-full sm:w-auto"
+        onClick={() => setOpen(true)}
+        disabled={loading}
+      >
+        Delete Exam
+      </Button>
+
+      <AlertDialog
+        open={open}
+        title={title}
+        description={description}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={loading}
+        onCancel={() => {
+          if (loading) return;
+          setOpen(false);
+        }}
+        onConfirm={async () => {
+          try {
+            setLoading(true);
+            await onDelete();
+            setOpen(false);
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
+    </>
+  );
+}
+
 export function TeacherDashboardPage() {
   const navigate = useNavigate();
 
@@ -33,6 +83,7 @@ export function TeacherDashboardPage() {
     errorMessage,
     fetchExams,
     createExam,
+    softDeleteExam,
   } = useExamStore();
 
   useEffect(() => {
@@ -57,10 +108,10 @@ export function TeacherDashboardPage() {
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success("Đăng xuất thành công");
+      toast.success("Logged out successfully");
       navigate("/", { replace: true });
     } catch {
-      toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
+      toast.error("Failed to log out. Please try again.");
     }
   };
 
@@ -228,11 +279,30 @@ export function TeacherDashboardPage() {
                     {exam.is_published ? "Published" : "Unpublished"}
                   </div>
                 </div>
+
                 {exam.description ? (
                   <p className="mt-2 text-sm text-slate-600">
                     {exam.description}
                   </p>
                 ) : null}
+
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full sm:w-auto sm:flex-1"
+                    onClick={() => navigate(`/teacher/exams/${exam.id}`)}
+                  >
+                    Manage Questions
+                  </Button>
+
+                  <DeleteExamInline
+                    examId={exam.id}
+                    onDelete={async () => {
+                      await softDeleteExam({ examId: exam.id });
+                    }}
+                  />
+                </div>
               </div>
             ))}
           </div>
