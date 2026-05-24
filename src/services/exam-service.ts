@@ -9,6 +9,7 @@ export type Exam = {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 };
 
 export async function fetchExams(params: {
@@ -19,12 +20,15 @@ export async function fetchExams(params: {
   let query = supabase
     .from("exams")
     .select(
-      "id,title,description,duration_minutes,is_published,created_by,created_at,updated_at",
+      "id,title,description,duration_minutes,is_published,created_by,created_at,updated_at,deleted_at",
     )
     .order("created_at", { ascending: false });
 
   // Single-teacher mode for V1, but keep created_by filtering ready for future.
   if (createdBy) query = query.eq("created_by", createdBy);
+
+  // Soft-delete: only show active exams
+  query = query.is("deleted_at", null);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -52,11 +56,24 @@ export async function createExam(params: {
       created_by: createdBy,
     })
     .select(
-      "id,title,description,duration_minutes,is_published,created_by,created_at,updated_at",
+      "id,title,description,duration_minutes,is_published,created_by,created_at,updated_at,deleted_at",
     )
     .single();
 
   if (error) throw error;
 
   return data as Exam;
+}
+
+export async function softDeleteExam(params: {
+  examId: string;
+}): Promise<void> {
+  const { examId } = params;
+
+  const { error } = await supabase
+    .from("exams")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", examId);
+
+  if (error) throw error;
 }

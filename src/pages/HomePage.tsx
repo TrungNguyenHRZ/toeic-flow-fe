@@ -13,10 +13,10 @@ export function HomePage() {
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success("Đăng xuất thành công");
+      toast.success("Logged out successfully");
       navigate("/", { replace: true });
     } catch {
-      toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
+      toast.error("Failed to log out. Please try again.");
     }
   };
 
