@@ -3,10 +3,10 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "@/layouts/AppLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
-import { ExamPage } from "@/pages/ExamPage";
 import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { PublicExamPage } from "@/pages/PublicExamPage";
 import { ResultPage } from "@/pages/ResultPage";
 import { TeacherDashboardPage } from "@/pages/TeacherDashboardPage";
 import { ExamDetailPage } from "@/pages/ExamDetailPage";
@@ -42,7 +42,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "exam/:examId",
-        element: <ExamPage />,
+        element: <PublicExamPage />,
       },
       {
         path: "result/:submissionId",

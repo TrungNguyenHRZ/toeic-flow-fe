@@ -84,6 +84,7 @@ export function TeacherDashboardPage() {
     fetchExams,
     createExam,
     softDeleteExam,
+    togglePublishExam,
   } = useExamStore();
 
   useEffect(() => {
@@ -274,9 +275,40 @@ export function TeacherDashboardPage() {
                     <p className="text-sm text-slate-600">
                       {exam.duration_minutes} minutes
                     </p>
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    {exam.is_published ? "Published" : "Unpublished"}
+
+                    <span
+                      className={
+                        exam.is_published
+                          ? "mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800"
+                          : "mt-2 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
+                      }
+                    >
+                      {exam.is_published ? "Published" : "Unpublished"}
+                    </span>
+
+                    <div className="mt-2 space-y-1 text-xs text-slate-600">
+                      <div>
+                        Part 5:{" "}
+                        <span className="font-medium text-slate-800">
+                          {exam.question_summary?.[5] ?? 0}
+                        </span>{" "}
+                        questions
+                      </div>
+                      <div>
+                        Part 6:{" "}
+                        <span className="font-medium text-slate-800">
+                          {exam.question_summary?.[6] ?? 0}
+                        </span>{" "}
+                        questions
+                      </div>
+                      <div>
+                        Part 7:{" "}
+                        <span className="font-medium text-slate-800">
+                          {exam.question_summary?.[7] ?? 0}
+                        </span>{" "}
+                        questions
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -296,12 +328,71 @@ export function TeacherDashboardPage() {
                     Manage Questions
                   </Button>
 
-                  <DeleteExamInline
-                    examId={exam.id}
-                    onDelete={async () => {
-                      await softDeleteExam({ examId: exam.id });
-                    }}
-                  />
+                  <div className="flex flex-wrap w-full gap-2 sm:w-auto">
+                    {exam.is_published ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        disabled={examsLoading}
+                        onClick={() => {
+                          void togglePublishExam({
+                            examId: exam.id,
+                            isPublished: false,
+                          });
+                        }}
+                      >
+                        Unpublish
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        disabled={examsLoading}
+                        onClick={() => {
+                          void togglePublishExam({
+                            examId: exam.id,
+                            isPublished: true,
+                          });
+                        }}
+                      >
+                        Publish
+                      </Button>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
+                      disabled={!exam.is_published || examsLoading}
+                      title={
+                        exam.is_published
+                          ? "Copy exam share link"
+                          : "Publish exam first"
+                      }
+                      onClick={async () => {
+                        if (!exam.is_published) return;
+
+                        const url = `${window.location.origin}/exam/${exam.id}`;
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          toast.success("Exam link copied successfully");
+                        } catch {
+                          toast.error("Failed to copy exam link");
+                        }
+                      }}
+                    >
+                      Share Exam
+                    </Button>
+
+                    <DeleteExamInline
+                      examId={exam.id}
+                      onDelete={async () => {
+                        await softDeleteExam({ examId: exam.id });
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
