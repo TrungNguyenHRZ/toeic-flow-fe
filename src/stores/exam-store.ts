@@ -5,6 +5,7 @@ import {
   fetchExams,
   createExam,
   softDeleteExam,
+  updateExamPublishStatus,
   type Exam,
 } from "@/services/exam-service";
 
@@ -22,6 +23,10 @@ type ExamStoreState = {
     is_published?: boolean;
   }) => Promise<void>;
   softDeleteExam: (params: { examId: string }) => Promise<void>;
+  togglePublishExam: (params: {
+    examId: string;
+    isPublished: boolean;
+  }) => Promise<void>;
   clearError: () => void;
 };
 
@@ -90,6 +95,39 @@ export const useExamStore = create<ExamStoreState>((set) => ({
       const message = e instanceof Error ? e.message : "Failed to delete exam.";
       set({ errorMessage: message });
       toast.error("Failed to delete exam");
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  togglePublishExam: async ({ examId, isPublished }) => {
+    set({ loading: true, errorMessage: null });
+    try {
+      const updated = await updateExamPublishStatus({ examId, isPublished });
+
+      // Immediate update: preserve exam list; only update the edited row.
+      set((state) => ({
+        exams: state.exams.map((e) => (e.id === updated.id ? updated : e)),
+      }));
+
+      if (isPublished) {
+        toast.success("Exam published successfully");
+      } else {
+        toast.success("Exam unpublished successfully");
+      }
+    } catch (e) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : "Failed to update exam publish status.";
+      set({ errorMessage: message });
+
+      if (isPublished) {
+        toast.error("Failed to publish exam");
+      } else {
+        toast.error("Failed to unpublish exam");
+      }
       throw e;
     } finally {
       set({ loading: false });
