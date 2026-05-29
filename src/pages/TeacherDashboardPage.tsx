@@ -135,7 +135,7 @@ export function TeacherDashboardPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3  border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">
             Teacher Dashboard
@@ -156,248 +156,252 @@ export function TeacherDashboardPage() {
       </div>
 
       {/* Create exam */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3">
-          <h2 className="text-lg font-semibold text-slate-900">Create Exam</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Create a new TOEIC exam. Questions editor comes later.
-          </p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-1">
-            <label
-              className="text-sm font-medium text-slate-800"
-              htmlFor="title"
-            >
-              Title
-            </label>
-            <input
-              id="title"
-              type="text"
-              placeholder="e.g. TOEIC Mock Test 1"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              {...register("title")}
-            />
-            {errors.title?.message ? (
-              <p className="text-xs text-red-600">{errors.title.message}</p>
-            ) : null}
+      <div className="flex flex-col gap-4   mx-auto w-full max-w-6xl ">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Create Exam
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Create a new TOEIC exam. Questions editor comes later.
+            </p>
           </div>
 
-          <div className="space-y-1">
-            <label
-              className="text-sm font-medium text-slate-800"
-              htmlFor="description"
-            >
-              Description
-            </label>
-            <textarea
-              id="description"
-              placeholder="Short description for students..."
-              rows={4}
-              className="w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              {...register("description")}
-            />
-            {errors.description?.message ? (
-              <p className="text-xs text-red-600">
-                {errors.description.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="space-y-1">
-            <label
-              className="text-sm font-medium text-slate-800"
-              htmlFor="duration_minutes"
-            >
-              Duration (minutes)
-            </label>
-            <input
-              id="duration_minutes"
-              type="number"
-              inputMode="numeric"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-              {...register("duration_minutes", { valueAsNumber: true })}
-            />
-            {errors.duration_minutes?.message ? (
-              <p className="text-xs text-red-600">
-                {errors.duration_minutes.message}
-              </p>
-            ) : null}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isCreating}
-            className="w-full sm:w-auto"
-          >
-            {isCreating ? "Creating..." : "Create Exam"}
-          </Button>
-
-          {errorMessage ? (
-            <p className="text-sm text-red-600">{errorMessage}</p>
-          ) : null}
-        </form>
-      </div>
-
-      {/* Exams list */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Your Exams</h2>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!user?.id || examsLoading}
-            onClick={() => user?.id && fetchExams({ createdBy: user.id })}
-          >
-            {examsLoading ? "Refreshing..." : "Refresh"}
-          </Button>
-        </div>
-
-        {examsLoading ? (
-          <div className="py-6 text-sm text-slate-600">Loading exams...</div>
-        ) : exams.length === 0 ? (
-          <div className="py-6 text-sm text-slate-600">
-            No exams yet. Create your first exam above.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {exams.map((exam) => (
-              <div
-                key={exam.id}
-                className="rounded-lg border border-slate-200 bg-white p-3"
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-1">
+              <label
+                className="text-sm font-medium text-slate-800"
+                htmlFor="title"
               >
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {exam.title}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      {exam.duration_minutes} minutes
-                    </p>
+                Title
+              </label>
+              <input
+                id="title"
+                type="text"
+                placeholder="e.g. TOEIC Mock Test 1"
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                {...register("title")}
+              />
+              {errors.title?.message ? (
+                <p className="text-xs text-red-600">{errors.title.message}</p>
+              ) : null}
+            </div>
 
-                    <span
-                      className={
-                        exam.is_published
-                          ? "mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800"
-                          : "mt-2 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
-                      }
-                    >
-                      {exam.is_published ? "Published" : "Unpublished"}
-                    </span>
+            <div className="space-y-1">
+              <label
+                className="text-sm font-medium text-slate-800"
+                htmlFor="description"
+              >
+                Description
+              </label>
+              <textarea
+                id="description"
+                placeholder="Short description for students..."
+                rows={4}
+                className="w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                {...register("description")}
+              />
+              {errors.description?.message ? (
+                <p className="text-xs text-red-600">
+                  {errors.description.message}
+                </p>
+              ) : null}
+            </div>
 
-                    <div className="mt-2 space-y-1 text-xs text-slate-600">
-                      <div>
-                        Part 5:{" "}
-                        <span className="font-medium text-slate-800">
-                          {exam.question_summary?.[5] ?? 0}
-                        </span>{" "}
-                        questions
-                      </div>
-                      <div>
-                        Part 6:{" "}
-                        <span className="font-medium text-slate-800">
-                          {exam.question_summary?.[6] ?? 0}
-                        </span>{" "}
-                        questions
-                      </div>
-                      <div>
-                        Part 7:{" "}
-                        <span className="font-medium text-slate-800">
-                          {exam.question_summary?.[7] ?? 0}
-                        </span>{" "}
-                        questions
+            <div className="space-y-1">
+              <label
+                className="text-sm font-medium text-slate-800"
+                htmlFor="duration_minutes"
+              >
+                Duration (minutes)
+              </label>
+              <input
+                id="duration_minutes"
+                type="number"
+                inputMode="numeric"
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                {...register("duration_minutes", { valueAsNumber: true })}
+              />
+              {errors.duration_minutes?.message ? (
+                <p className="text-xs text-red-600">
+                  {errors.duration_minutes.message}
+                </p>
+              ) : null}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isCreating}
+              className="w-full sm:w-auto"
+            >
+              {isCreating ? "Creating..." : "Create Exam"}
+            </Button>
+
+            {errorMessage ? (
+              <p className="text-sm text-red-600">{errorMessage}</p>
+            ) : null}
+          </form>
+        </div>
+
+        {/* Exams list */}
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Your Exams</h2>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!user?.id || examsLoading}
+              onClick={() => user?.id && fetchExams({ createdBy: user.id })}
+            >
+              {examsLoading ? "Refreshing..." : "Refresh"}
+            </Button>
+          </div>
+
+          {examsLoading ? (
+            <div className="py-6 text-sm text-slate-600">Loading exams...</div>
+          ) : exams.length === 0 ? (
+            <div className="py-6 text-sm text-slate-600">
+              No exams yet. Create your first exam above.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {exams.map((exam) => (
+                <div
+                  key={exam.id}
+                  className="rounded-lg border border-slate-200 bg-white p-3"
+                >
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {exam.title}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {exam.duration_minutes} minutes
+                      </p>
+
+                      <span
+                        className={
+                          exam.is_published
+                            ? "mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800"
+                            : "mt-2 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700"
+                        }
+                      >
+                        {exam.is_published ? "Published" : "Unpublished"}
+                      </span>
+
+                      <div className="mt-2 space-y-1 text-xs text-slate-600">
+                        <div>
+                          Part 5:{" "}
+                          <span className="font-medium text-slate-800">
+                            {exam.question_summary?.[5] ?? 0}
+                          </span>{" "}
+                          questions
+                        </div>
+                        <div>
+                          Part 6:{" "}
+                          <span className="font-medium text-slate-800">
+                            {exam.question_summary?.[6] ?? 0}
+                          </span>{" "}
+                          questions
+                        </div>
+                        <div>
+                          Part 7:{" "}
+                          <span className="font-medium text-slate-800">
+                            {exam.question_summary?.[7] ?? 0}
+                          </span>{" "}
+                          questions
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {exam.description ? (
-                  <p className="mt-2 text-sm text-slate-600">
-                    {exam.description}
-                  </p>
-                ) : null}
+                  {exam.description ? (
+                    <p className="mt-2 text-sm text-slate-600">
+                      {exam.description}
+                    </p>
+                  ) : null}
 
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="w-full sm:w-auto sm:flex-1"
-                    onClick={() => navigate(`/teacher/exams/${exam.id}`)}
-                  >
-                    Manage Questions
-                  </Button>
-
-                  <div className="flex flex-wrap w-full gap-2 sm:w-auto">
-                    {exam.is_published ? (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="w-full sm:w-auto"
-                        disabled={examsLoading}
-                        onClick={() => {
-                          void togglePublishExam({
-                            examId: exam.id,
-                            isPublished: false,
-                          });
-                        }}
-                      >
-                        Unpublish
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="w-full sm:w-auto"
-                        disabled={examsLoading}
-                        onClick={() => {
-                          void togglePublishExam({
-                            examId: exam.id,
-                            isPublished: true,
-                          });
-                        }}
-                      >
-                        Publish
-                      </Button>
-                    )}
-
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Button
                       type="button"
                       variant="secondary"
-                      className="w-full sm:w-auto"
-                      disabled={!exam.is_published || examsLoading}
-                      title={
-                        exam.is_published
-                          ? "Copy exam share link"
-                          : "Publish exam first"
-                      }
-                      onClick={async () => {
-                        if (!exam.is_published) return;
-
-                        const url = `${window.location.origin}/exam/${exam.id}`;
-                        try {
-                          await navigator.clipboard.writeText(url);
-                          toast.success("Exam link copied successfully");
-                        } catch {
-                          toast.error("Failed to copy exam link");
-                        }
-                      }}
+                      className="w-full sm:w-auto sm:flex-1"
+                      onClick={() => navigate(`/teacher/exams/${exam.id}`)}
                     >
-                      Share Exam
+                      Manage Questions
                     </Button>
 
-                    <DeleteExamInline
-                      examId={exam.id}
-                      onDelete={async () => {
-                        await softDeleteExam({ examId: exam.id });
-                      }}
-                    />
+                    <div className="flex flex-wrap w-full gap-2 sm:w-auto">
+                      {exam.is_published ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="w-full sm:w-auto"
+                          disabled={examsLoading}
+                          onClick={() => {
+                            void togglePublishExam({
+                              examId: exam.id,
+                              isPublished: false,
+                            });
+                          }}
+                        >
+                          Unpublish
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="w-full sm:w-auto"
+                          disabled={examsLoading}
+                          onClick={() => {
+                            void togglePublishExam({
+                              examId: exam.id,
+                              isPublished: true,
+                            });
+                          }}
+                        >
+                          Publish
+                        </Button>
+                      )}
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full sm:w-auto"
+                        disabled={!exam.is_published || examsLoading}
+                        title={
+                          exam.is_published
+                            ? "Copy exam share link"
+                            : "Publish exam first"
+                        }
+                        onClick={async () => {
+                          if (!exam.is_published) return;
+
+                          const url = `${window.location.origin}/exam/${exam.id}`;
+                          try {
+                            await navigator.clipboard.writeText(url);
+                            toast.success("Exam link copied successfully");
+                          } catch {
+                            toast.error("Failed to copy exam link");
+                          }
+                        }}
+                      >
+                        Share Exam
+                      </Button>
+
+                      <DeleteExamInline
+                        examId={exam.id}
+                        onDelete={async () => {
+                          await softDeleteExam({ examId: exam.id });
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

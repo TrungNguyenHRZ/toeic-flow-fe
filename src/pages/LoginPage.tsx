@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,8 +22,13 @@ export function LoginPage() {
 
   const login = useAuthStore((s) => s.login);
   const user = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
+  const roleLoading = useAuthStore((s) => s.roleLoading);
+
   const loading = useAuthStore((s) => s.loading);
   const initialized = useAuthStore((s) => s.initialized);
+
+  const redirectedRef = useRef(false);
 
   const {
     register,
@@ -36,18 +41,24 @@ export function LoginPage() {
   });
 
   useEffect(() => {
-    // Avoid flicker: only redirect after auth initialization finishes.
-    if (initialized && user) navigate("/teacher", { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialized, user]);
+    // Avoid flicker: only redirect after auth initialization + role fetch completes.
+    if (!initialized || !user || roleLoading) return;
+
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+
+    const nextPath = role === "admin" ? "/admin" : "/teacher";
+    navigate(nextPath, { replace: true });
+  }, [initialized, role, roleLoading, navigate, user]);
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
       await login(values);
       toast.success("Logged in successfully");
-      navigate("/teacher", { replace: true });
-    } catch (err) {
+      // Navigation is handled by the effect once roleLoading resolves.
+    } catch {
       toast.error("Email hoặc mật khẩu không chính xác");
+      redirectedRef.current = false;
     }
   };
 
