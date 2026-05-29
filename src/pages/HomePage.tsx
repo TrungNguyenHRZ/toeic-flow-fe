@@ -23,7 +23,7 @@ export function HomePage() {
   if (user) {
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="border border-slate-200 bg-white p-4 shadow-sm">
           <h1 className="text-xl font-semibold text-slate-900">Welcome back</h1>
           <p className="mt-1 text-sm text-slate-600">
             Logged in as <span className="font-medium">{user.email}</span>
@@ -45,7 +45,7 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-slate-600">
             TOEIC learning & exam features will be available in V1.
           </p>
@@ -56,7 +56,7 @@ export function HomePage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="border border-slate-200 bg-white p-4 shadow-sm">
         <h1 className="text-xl font-semibold text-slate-900">ToeicFlow</h1>
         <p className="mt-1 text-sm text-slate-600">
           Teacher login is required for the dashboard.
@@ -67,7 +67,7 @@ export function HomePage() {
             onClick={() => navigate("/login")}
             className="w-full sm:w-auto"
           >
-            Login as Teacher
+            Login
           </Button>
         </div>
       </div>
