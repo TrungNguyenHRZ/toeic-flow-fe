@@ -1,140 +1,192 @@
-# TOEIC Flow (React + TypeScript + Vite)
+# TOEICFlow
 
-## Project Overview
+> A modern TOEIC exam management & practice platform (AI-assisted learning project)
 
-**TOEIC Flow** is an exam management platform for TOEIC practice. It provides a teacher-focused workflow to:
+## Overview
 
-- authenticate teachers
-- create and manage exams
-- manage **TOEIC Reading Part 5** questions
+**TOEICFlow** is a TOEIC learning and exam management platform built for teachers and students, with a focus on the **TOEIC Reading Part 5 MVP** today and a structure meant to scale to other parts later.
 
-The current MVP is **Part 5-only**, but the architecture is intentionally designed to scale to **Part 6 and Part 7**.
-
----
+This repository is a **personal, non-commercial learning project** created to explore modern frontend architecture and an AI-assisted development workflow.
 
 ## Features
 
-- Teacher authentication (Supabase Auth)
-- Protected teacher dashboard
-- Exam CRUD
-- TOEIC Reading Part 5 question CRUD
-- Soft delete for exams
-- External `image_url` support for question images (no upload workflow in MVP)
-- Future-ready structure for Part 6 / Part 7
+### Authentication & Roles
 
----
+- Supabase authentication
+- Teacher role
+- Admin role
+- Role-protected routing
+
+### Teacher
+
+- Create TOEIC exams
+- Manage questions (Part 5 in V1)
+- Publish / unpublish exams
+- Share public exam links
+- Soft delete exams
+- Restore soft-deleted exams
+
+### Student
+
+- Public exam experience
+- Timer-based practice
+- Sticky question palette/sidebar (UX designed for exams)
+- Auto-submit when time runs out
+- Instant result calculation
+
+### Admin
+
+- Admin dashboard
+- Accounts overview
+- Exams overview
+- Deleted exams management
+- Restore soft-deleted exams
+- Exam detail view (read-only + restore)
+
+### UI / UX polish
+
+- Responsive layout
+- Mobile bottom navigation
+- Fixed admin shell layout + improved scroll behavior
+- SaaS-style homepage
+- Branding/logo integration
+- Favicon integration
 
 ## Tech Stack
 
-- **Frontend:** React + TypeScript + Vite
-- **State Management:** Zustand
-- **UI:** Tailwind CSS
-- **Forms & Validation:** React Hook Form + Zod
-- **Backend / Auth / Database:** Supabase
+### Frontend
 
----
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- Zustand
+- React Hook Form
+- Zod
+
+### Backend / Infrastructure
+
+- **Supabase**
+  - Authentication
+  - Database
+  - Storage (reserved for future workflows)
+  - RLS policies
+
+### Deployment
+
+- Vercel
+
+## Architecture (high-level)
+
+The codebase follows a clean, layered approach:
+
+- **`services/`**  
+  Supabase communication layer: queries, mutations, and data access.
+- **`stores/`**  
+  Zustand state and app orchestration: UI/business state and workflow logic.
+- **`pages/`**  
+  UI orchestration layer: route-level screens that render and coordinate stores/services.
+- **`lib/`**  
+  Shared helpers (e.g., Supabase client wrapper).
+- **`routes/`**  
+  Router definitions and route protection.
+
+This layering keeps data access and state logic maintainable while ensuring pages remain focused on UI composition.
 
 ## Project Structure
 
-This project follows a layered architecture:
+Example layout:
 
-- **`services/` = Supabase access layer**  
-  Contains Supabase queries/mutations and data-fetching logic.
+```
+src/
+  pages/        # route-level screens (UI orchestration)
+  routes/       # router + protected/role-based routes
+  services/     # Supabase queries/mutations (communication layer)
+  stores/       # Zustand state + workflow orchestration
+  layouts/      # App layouts (public app layout + admin shell)
+  components/   # UI components and shadcn/ui wrappers
+  hooks/        # reusable hooks
+  lib/          # shared utilities (e.g., supabase client)
+  assets/       # static assets (branding/logos, etc.)
+  constants/
+  types/
+  utils/
+```
 
-- **`stores/` = Zustand business state**  
-  Orchestrates app workflows and holds UI/business state.
+### Why this separation?
 
-- **`pages/` = UI / orchestration layer**  
-  Route-level screens that render UI and call into stores.
-
-Additional structure:
-
-- **`routes/`**: route definitions and protected routing
-- **`lib/`**: shared helpers (e.g., Supabase client wrapper)
-
----
+- **services =** Supabase I/O
+- **stores =** state + workflow
+- **pages =** screen composition
 
 ## Environment Variables
 
 This app uses Supabase. Create a `.env` file at the project root:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+```bash
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
 Do not commit `.env` to version control.
 
----
+## Setup
 
-## Getting Started
-
-1. Install dependencies:
+### 1) Install dependencies
 
 ```bash
 npm install
 ```
 
-2. Start the dev server:
+### 2) Run locally
 
 ```bash
 npm run dev
 ```
 
-3. Open the local URL shown in the terminal (commonly `http://localhost:5173`).
+Then open the local URL shown in your terminal (commonly `http://localhost:5173`).
 
----
-
-## Supabase Setup
+## Supabase Setup (quick checklist)
 
 1. Create a Supabase project.
-2. Set up **authentication** for teachers.
-3. Create the required tables (at minimum for):
-   - exams
-   - TOEIC Part 5 questions
-4. Configure **Row Level Security (RLS)** policies so teacher-only access is enforced.
-5. Add your credentials to `.env`:
-   - `VITE_SUPABASE_URL=...`
-   - `VITE_SUPABASE_ANON_KEY=...`
+2. Enable **authentication** for teachers (and admin role as needed).
+3. Create the required tables (at minimum):
+   - `exams`
+   - TOEIC Part 5 questions (MVP)
+   - (plus any supporting tables/columns used by the app)
+4. Configure **RLS policies** so teacher/admin access is enforced.
+5. Add credentials to `.env`:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
 
----
+## Deployment
 
-## Authentication Flow
+This project is designed to be deployable on **Vercel**.
 
-1. A teacher signs in using **Supabase Auth**.
-2. Auth/session state is handled by the app and stored in **Zustand** (auth store).
-3. Protected routes (e.g., teacher dashboard) ensure unauthenticated users cannot access teacher pages.
-4. Authenticated teachers interact with exams and questions via:
-   - `services/` (Supabase calls)
-   - `stores/` (state + orchestration)
-   - `pages/` (UI)
+1. Connect your GitHub repo to Vercel.
+2. Add environment variables:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. Deploy using your standard Vite+React build settings.
 
----
+## AI-Assisted Development Disclaimer (Important)
 
-## Current Limitations
+This is a **personal/non-commercial learning project**.
 
-- **MVP scope:** **TOEIC Reading Part 5 only**
-- **Question images:** uses external `image_url` values in the current MVP (no file upload/storage flow yet)
-- Teacher workflow is implemented; other user flows/roles can be added later.
+Approximately **99% of the codebase** was developed with assistance from AI tools. AI tools used include:
 
----
+- **ChatGPT**
+- **Blackbox AI** (Kimi K2.6 model)
 
-## Important Architecture Decisions
+The project exists primarily for learning, experimentation, and practicing AI-assisted software development workflows.
 
-- **Soft delete for exams**  
-  Exams are marked as deleted instead of being permanently removed. This preserves data and supports future history/recovery/audit needs.
+## Notes / Limitations
 
-- **External `image_url` for question images**  
-  Questions rely on externally hosted images to keep the MVP lightweight and avoid upload/storage complexity.
+- The current MVP focuses on **TOEIC Reading Part 5**.
+- Teacher/admin routing and exam/question flows are implemented, while student experience uses public/shared exam links.
+- Media handling for question images uses **external `image_url`** values in the MVP (no upload workflow yet).
 
-- **Part 5-only MVP with future-ready design**  
-  The current services/stores/pages approach is structured so adding Part 6/7 doesn’t require reworking the core architecture.
+## License
 
----
-
-## Future Roadmap
-
-Planned next steps aligned with the current architecture:
-
-- Add **TOEIC Reading Part 6** (question CRUD + UI)
-- Add **TOEIC Reading Part 7** (question CRUD + UI)
-- Revisit media handling for questions (optionally evolve beyond `image_url`)
-- Expand teacher dashboard workflows as new exam parts and features are added
+See repository license (if present). If no license is provided, assume **all rights reserved** by the author.
