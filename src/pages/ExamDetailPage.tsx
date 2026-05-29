@@ -53,7 +53,7 @@ function QuestionImage(props: { src: string; alt: string }) {
 
   if (hasError) {
     return (
-      <div className="mt-2 flex min-h-[12rem] items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
+      <div className="mt-2 flex min-h-48 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
         Image failed to load
       </div>
     );
