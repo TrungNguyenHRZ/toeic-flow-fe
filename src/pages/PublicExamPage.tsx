@@ -6,10 +6,6 @@ import { supabase } from "@/lib/supabase";
 import type { CorrectAnswer } from "@/services/question-service";
 
 import { ExamStartCard } from "@/components/exam/ExamStartCard";
-import { ExamResultSummary } from "@/components/exam/ExamResultSummary";
-import { ExamQuestionCard } from "@/components/exam/ExamQuestionCard";
-import { ExamReviewCard } from "@/components/exam/ExamReviewCard";
-import { ExamSidebar } from "@/components/exam/ExamSidebar";
 
 import { Button } from "@/components/ui/button";
 
