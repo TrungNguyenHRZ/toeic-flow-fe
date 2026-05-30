@@ -5,6 +5,12 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import type { CorrectAnswer } from "@/services/question-service";
 
+import { ExamStartCard } from "@/components/exam/ExamStartCard";
+import { ExamResultSummary } from "@/components/exam/ExamResultSummary";
+import { ExamQuestionCard } from "@/components/exam/ExamQuestionCard";
+import { ExamReviewCard } from "@/components/exam/ExamReviewCard";
+import { ExamSidebar } from "@/components/exam/ExamSidebar";
+
 import { Button } from "@/components/ui/button";
 
 type PublicExamRow = {
@@ -25,6 +31,7 @@ type PublicQuestionRow = {
   option_c: string;
   option_d: string;
   correct_answer: CorrectAnswer;
+  explanation: string | null;
 };
 
 type AnswersByQuestionId = Record<string, CorrectAnswer | undefined>;
@@ -103,6 +110,21 @@ export function PublicExamPage() {
     }, 0);
   }, [answers, questions]);
 
+  const totalSeconds = useMemo(() => {
+    return exam ? Math.max(0, Math.floor(exam.duration_minutes * 60)) : 0;
+  }, [exam]);
+
+  const timeUsedSeconds = useMemo(() => {
+    if (!submitted) return 0;
+    return Math.max(0, totalSeconds - remainingSeconds);
+  }, [remainingSeconds, submitted, totalSeconds]);
+
+  const completionRatePercent = useMemo(() => {
+    const total = questions.length;
+    if (total === 0) return 0;
+    return Math.round((answeredCount / total) * 100);
+  }, [answeredCount, questions.length]);
+
   useEffect(() => {
     if (!examId) return;
 
@@ -145,7 +167,7 @@ export function PublicExamPage() {
         const { data: questionRows, error: qError } = await supabase
           .from("questions")
           .select(
-            "id,question_order,question_text,image_url,option_a,option_b,option_c,option_d,correct_answer",
+            "id,question_order,question_text,image_url,option_a,option_b,option_c,option_d,correct_answer,explanation",
           )
           .eq("exam_id", examId)
           .eq("part", 5)
@@ -311,57 +333,16 @@ export function PublicExamPage() {
         <div className="min-w-0">
           <div className="space-y-3">
             {!started && !submitted ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Start Exam
-                </h2>
-
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <label
-                      className="text-sm font-medium text-slate-800"
-                      htmlFor="studentName"
-                    >
-                      Student Name
-                    </label>
-                    <input
-                      id="studentName"
-                      type="text"
-                      placeholder="e.g. Nguyen Van A"
-                      value={studentName}
-                      onChange={(e) => setStudentName(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label
-                      className="text-sm font-medium text-slate-800"
-                      htmlFor="studentClass"
-                    >
-                      Student Class
-                    </label>
-                    <input
-                      id="studentClass"
-                      type="text"
-                      placeholder="e.g. 10A"
-                      value={studentClass}
-                      onChange={(e) => setStudentClass(e.target.value)}
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none ring-offset-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                    />
-                  </div>
-                </div>
-
-                {startError ? (
-                  <div className="mt-3 text-sm text-red-600">{startError}</div>
-                ) : null}
-
-                <div className="mt-4">
-                  <Button type="button" onClick={onStart} className="w-full">
-                    Start Exam
-                  </Button>
-                </div>
-              </div>
+              <ExamStartCard
+                exam={exam}
+                studentName={studentName}
+                studentClass={studentClass}
+                startError={startError}
+                onChangeStudentName={setStudentName}
+                onChangeStudentClass={setStudentClass}
+                onStart={onStart}
+                questionsCount={questions.length}
+              />
             ) : null}
 
             {submitted && result ? (
@@ -385,7 +366,7 @@ export function PublicExamPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <div className="text-xs text-slate-600">Correct</div>
                     <div className="text-lg font-semibold text-slate-900">
@@ -404,130 +385,318 @@ export function PublicExamPage() {
                       {result.percentage}%
                     </div>
                   </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs text-slate-600">Time Used</div>
+                    <div className="text-lg font-semibold text-slate-900">
+                      {formatMMSS(timeUsedSeconds)}
+                    </div>
+                  </div>
                 </div>
+              </div>
+            ) : null}
+
+            {questions.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+                No Part 5 questions found for this exam.
               </div>
             ) : null}
 
             {started && !submitted ? (
               <>
-                {questions.length === 0 ? (
-                  <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-                    No Part 5 questions found for this exam.
-                  </div>
-                ) : (
-                  <>
-                    {questions.map((q, idx) => {
-                      const selected = answers[q.id];
-                      const questionNumber = idx + 1;
+                {questions.map((q, idx) => {
+                  const selected = answers[q.id];
+                  const questionNumber = idx + 1;
 
-                      return (
-                        <div
-                          key={q.id}
-                          id={`question-${q.id}`}
-                          ref={(el) => {
-                            questionRefs.current[q.id] = el;
-                          }}
-                          className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-slate-900">
-                                Question {questionNumber}
-                              </div>
-                              <div className="mt-2 whitespace-pre-wrap text-sm text-slate-800">
-                                {q.question_text ?? "No question text"}
-                              </div>
-                            </div>
+                  return (
+                    <div
+                      key={q.id}
+                      id={`question-${q.id}`}
+                      ref={(el) => {
+                        questionRefs.current[q.id] = el;
+                      }}
+                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            Question {questionNumber}
                           </div>
-
-                          {q.image_url ? (
-                            <div className="mt-3">
-                              <img
-                                src={q.image_url}
-                                alt="Question"
-                                className="max-h-72 w-full rounded-md border border-slate-200 object-contain bg-white"
-                                onError={(e) => {
-                                  (
-                                    e.currentTarget as HTMLImageElement
-                                  ).style.display = "none";
-                                }}
-                              />
-                            </div>
-                          ) : null}
-
-                          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            {(
-                              [
-                                ["A", q.option_a],
-                                ["B", q.option_b],
-                                ["C", q.option_c],
-                                ["D", q.option_d],
-                              ] as const
-                            ).map(([label, text]) => {
-                              const value = label as CorrectAnswer;
-                              const checked = selected === value;
-
-                              return (
-                                <label
-                                  key={label}
-                                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
-                                    checked
-                                      ? "border-slate-500 bg-slate-50"
-                                      : "border-slate-200 bg-white hover:bg-slate-50"
-                                  }`}
-                                >
-                                  <input
-                                    type="radio"
-                                    name={`q-${q.id}`}
-                                    checked={checked}
-                                    disabled={submitting}
-                                    onChange={() => onPick(q.id, value)}
-                                    className="h-4 w-4"
-                                  />
-                                  <div className="min-w-0">
-                                    <div className="text-sm font-semibold text-slate-900">
-                                      {label}
-                                    </div>
-                                    <div className="text-sm text-slate-700 truncate">
-                                      {text}
-                                    </div>
-                                  </div>
-                                </label>
-                              );
-                            })}
+                          <div className="mt-2 whitespace-pre-wrap text-sm text-slate-800">
+                            {q.question_text ?? "No question text"}
                           </div>
                         </div>
-                      );
-                    })}
-                  </>
-                )}
+                      </div>
+
+                      {q.image_url ? (
+                        <div className="mt-3">
+                          <img
+                            src={q.image_url}
+                            alt="Question"
+                            className="max-h-72 w-full rounded-md border border-slate-200 object-contain bg-white"
+                            onError={(e) => {
+                              (
+                                e.currentTarget as HTMLImageElement
+                              ).style.display = "none";
+                            }}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {(
+                          [
+                            ["A", q.option_a],
+                            ["B", q.option_b],
+                            ["C", q.option_c],
+                            ["D", q.option_d],
+                          ] as const
+                        ).map(([label, text]) => {
+                          const value = label as CorrectAnswer;
+                          const checked = selected === value;
+
+                          return (
+                            <label
+                              key={label}
+                              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                                checked
+                                  ? "border-slate-500 bg-slate-50"
+                                  : "border-slate-200 bg-white hover:bg-slate-50"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name={`q-${q.id}`}
+                                checked={checked}
+                                disabled={submitting}
+                                onChange={() => onPick(q.id, value)}
+                                className="h-4 w-4"
+                              />
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-slate-900">
+                                  {label}
+                                </div>
+                                <div className="text-sm text-slate-700 truncate">
+                                  {text}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </>
+            ) : null}
+
+            {started && submitted ? (
+              <div className="space-y-3">
+                {questions.map((q, idx) => {
+                  const selected = answers[q.id];
+                  const questionNumber = idx + 1;
+
+                  const answeredCorrectly =
+                    selected !== undefined && selected === q.correct_answer;
+
+                  const statusBadge =
+                    selected === undefined
+                      ? {
+                          text: "Unanswered",
+                          className:
+                            "border-slate-200 bg-slate-50 text-slate-700",
+                        }
+                      : answeredCorrectly
+                        ? {
+                            text: "Correct",
+                            className:
+                              "border-emerald-300 bg-emerald-50 text-emerald-800",
+                          }
+                        : {
+                            text: "Incorrect",
+                            className:
+                              "border-rose-300 bg-rose-50 text-rose-800",
+                          };
+
+                  const yourAnswerText =
+                    selected === undefined ? "Not Answered" : selected;
+
+                  const correctAnswerText = q.correct_answer;
+
+                  return (
+                    <div
+                      key={q.id}
+                      id={`question-${q.id}`}
+                      ref={(el) => {
+                        questionRefs.current[q.id] = el;
+                      }}
+                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            Question {questionNumber}
+                          </div>
+                          <div className="mt-2 whitespace-pre-wrap text-sm text-slate-800">
+                            {q.question_text ?? "No question text"}
+                          </div>
+                        </div>
+
+                        <div
+                          className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-semibold ${statusBadge.className}`}
+                        >
+                          {statusBadge.text}
+                        </div>
+                      </div>
+
+                      {q.image_url ? (
+                        <div className="mt-3">
+                          <img
+                            src={q.image_url}
+                            alt="Question"
+                            className="max-h-72 w-full rounded-md border border-slate-200 object-contain bg-white"
+                            onError={(e) => {
+                              (
+                                e.currentTarget as HTMLImageElement
+                              ).style.display = "none";
+                            }}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {(
+                          [
+                            ["A", q.option_a],
+                            ["B", q.option_b],
+                            ["C", q.option_c],
+                            ["D", q.option_d],
+                          ] as const
+                        ).map(([label, text]) => {
+                          const value = label as CorrectAnswer;
+                          const isYourAnswer = selected === value;
+                          const isCorrect = value === q.correct_answer;
+
+                          let optionBorder = "border-slate-200 bg-white";
+                          if (isCorrect)
+                            optionBorder = "border-emerald-300 bg-emerald-50";
+                          if (isYourAnswer && !isCorrect)
+                            optionBorder = "border-rose-300 bg-rose-50";
+
+                          return (
+                            <div
+                              key={label}
+                              className={`rounded-lg border p-3 ${optionBorder}`}
+                            >
+                              <div className="text-sm font-semibold text-slate-900">
+                                {label}
+                              </div>
+                              <div className="text-sm text-slate-700 truncate">
+                                {text}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        <div className="text-sm font-semibold text-slate-900">
+                          Your Answer:{" "}
+                          <span className="font-bold text-slate-900">
+                            {yourAnswerText}
+                          </span>
+                        </div>
+
+                        <div className="text-sm font-semibold text-slate-900">
+                          Correct Answer:{" "}
+                          <span className="font-bold text-slate-900">
+                            {correctAnswerText}
+                          </span>
+                        </div>
+
+                        {(() => {
+                          const normalized =
+                            q.explanation?.trim?.() ?? q.explanation ?? "";
+
+                          if (!normalized) return null;
+
+                          return (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                              <div className="text-sm font-semibold text-amber-900">
+                                <span className="mr-2">💡</span>
+                                Explanation
+                              </div>
+                              <div className="mt-2 whitespace-pre-wrap text-sm text-amber-900/90">
+                                {normalized}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : null}
           </div>
         </div>
 
-        {/* Right: sticky sidebar */}
-        {started && !submitted ? (
+        {/* Right: sticky sidebar (kept after submission) */}
+        {started && questions.length > 0 ? (
           <aside className="hidden lg:block lg:sticky lg:top-6 self-start">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="space-y-4">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">
-                    Time Remaining
-                  </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900">
-                    {formatMMSS(remainingSeconds)}
-                  </div>
-                </div>
+                {!submitted ? (
+                  <>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        Time Remaining
+                      </div>
+                      <div className="mt-1 text-lg font-semibold text-slate-900">
+                        {formatMMSS(remainingSeconds)}
+                      </div>
+                    </div>
 
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">
-                    Progress
-                  </div>
-                  <div className="mt-1 text-sm text-slate-700">
-                    {answeredCount} / {questions.length} answered
-                  </div>
-                </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        Progress
+                      </div>
+                      <div className="mt-1 text-sm text-slate-700">
+                        {answeredCount} / {questions.length} answered
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        Result Summary
+                      </div>
+
+                      <div className="mt-3 space-y-3">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="text-xs text-slate-600">
+                            Time Used
+                          </div>
+                          <div className="mt-1 text-lg font-semibold text-slate-900">
+                            {formatMMSS(timeUsedSeconds)}
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="text-xs text-slate-600">
+                            Completion
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">
+                            {answeredCount} / {questions.length} answered
+                          </div>
+                          <div className="mt-1 text-xs font-semibold text-emerald-800">
+                            {completionRatePercent}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <div className="text-sm font-semibold text-slate-900">
@@ -535,19 +704,41 @@ export function PublicExamPage() {
                   </div>
                   <div className="mt-2 grid grid-cols-6 gap-2">
                     {questions.map((q, idx) => {
-                      const answered = !!answers[q.id];
                       const number = idx + 1;
+                      const selected = answers[q.id];
+
+                      const isUnanswered = !selected;
+                      const isCorrect =
+                        selected !== undefined && selected === q.correct_answer;
+                      const isIncorrect =
+                        selected !== undefined && selected !== q.correct_answer;
+
+                      let paletteClass =
+                        "border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
+
+                      if (submitted) {
+                        if (isCorrect)
+                          paletteClass =
+                            "border-emerald-300 bg-emerald-50 text-emerald-800";
+                        else if (isIncorrect)
+                          paletteClass =
+                            "border-rose-300 bg-rose-50 text-rose-800";
+                        else if (isUnanswered)
+                          paletteClass =
+                            "border-slate-200 bg-slate-50 text-slate-700";
+                      } else {
+                        const answered = !!answers[q.id];
+                        paletteClass = answered
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
+                      }
 
                       return (
                         <button
                           key={q.id}
                           type="button"
                           onClick={() => scrollToQuestion(q.id)}
-                          className={`rounded border px-1 py-1 text-xs font-semibold transition-colors ${
-                            answered
-                              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                          }`}
+                          className={`rounded border px-1 py-1 text-xs font-semibold transition-colors ${paletteClass}`}
                           aria-label={`Go to question ${number}`}
                         >
                           {number}
@@ -557,23 +748,25 @@ export function PublicExamPage() {
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <Button
-                    type="button"
-                    onClick={() => submitExam()}
-                    disabled={!canSubmit || submitting}
-                    className="w-full"
-                  >
-                    {submitting ? "Submitting..." : "Submit Exam"}
-                  </Button>
-                </div>
+                {!submitted ? (
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      onClick={() => submitExam()}
+                      disabled={!canSubmit || submitting}
+                      className="w-full"
+                    >
+                      {submitting ? "Submitting..." : "Submit Exam"}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </aside>
         ) : null}
       </div>
 
-      {/* Desktop: button is inside sidebar; mobile still needs it if sidebar stacks away */}
+      {/* Mobile: submit button only while exam is in progress */}
       {started && !submitted ? (
         <div className="mt-3 lg:hidden">
           <Button

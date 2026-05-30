@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 
@@ -40,8 +41,27 @@ function MockPanel(props: { title: string; children: ReactNode }) {
 export function HomePage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const role = useAuthStore((s) => s.role);
   const loading = useAuthStore((s) => s.loading);
+  const roleLoading = useAuthStore((s) => s.roleLoading);
+  const initialized = useAuthStore((s) => s.initialized);
   const logout = useAuthStore((s) => s.logout);
+
+  useEffect(() => {
+    // Avoid redirect flicker: wait for global auth init/loading + role fetch.
+    if (!user) return;
+    if (!initialized || loading || roleLoading) return;
+
+    if (role === "teacher") {
+      navigate("/teacher", { replace: true });
+      return;
+    }
+
+    if (role === "admin") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+  }, [initialized, loading, navigate, role, roleLoading, user]);
 
   const handleLogout = async () => {
     try {
