@@ -1,73 +1,192 @@
-# React + TypeScript + Vite
+# TOEICFlow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A modern TOEIC exam management & practice platform (AI-assisted learning project)
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**TOEICFlow** is a TOEIC learning and exam management platform built for teachers and students, with a focus on the **TOEIC Reading Part 5 MVP** today and a structure meant to scale to other parts later.
 
-## React Compiler
+This repository is a **personal, non-commercial learning project** created to explore modern frontend architecture and an AI-assisted development workflow.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+### Authentication & Roles
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Supabase authentication
+- Teacher role
+- Admin role
+- Role-protected routing
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Teacher
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Create TOEIC exams
+- Manage questions (Part 5 in V1)
+- Publish / unpublish exams
+- Share public exam links
+- Soft delete exams
+- Restore soft-deleted exams
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Student
+
+- Public exam experience
+- Timer-based practice
+- Sticky question palette/sidebar (UX designed for exams)
+- Auto-submit when time runs out
+- Instant result calculation
+
+### Admin
+
+- Admin dashboard
+- Accounts overview
+- Exams overview
+- Deleted exams management
+- Restore soft-deleted exams
+- Exam detail view (read-only + restore)
+
+### UI / UX polish
+
+- Responsive layout
+- Mobile bottom navigation
+- Fixed admin shell layout + improved scroll behavior
+- SaaS-style homepage
+- Branding/logo integration
+- Favicon integration
+
+## Tech Stack
+
+### Frontend
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- Zustand
+- React Hook Form
+- Zod
+
+### Backend / Infrastructure
+
+- **Supabase**
+  - Authentication
+  - Database
+  - Storage (reserved for future workflows)
+  - RLS policies
+
+### Deployment
+
+- Vercel
+
+## Architecture (high-level)
+
+The codebase follows a clean, layered approach:
+
+- **`services/`**  
+  Supabase communication layer: queries, mutations, and data access.
+- **`stores/`**  
+  Zustand state and app orchestration: UI/business state and workflow logic.
+- **`pages/`**  
+  UI orchestration layer: route-level screens that render and coordinate stores/services.
+- **`lib/`**  
+  Shared helpers (e.g., Supabase client wrapper).
+- **`routes/`**  
+  Router definitions and route protection.
+
+This layering keeps data access and state logic maintainable while ensuring pages remain focused on UI composition.
+
+## Project Structure
+
+Example layout:
+
+```
+src/
+  pages/        # route-level screens (UI orchestration)
+  routes/       # router + protected/role-based routes
+  services/     # Supabase queries/mutations (communication layer)
+  stores/       # Zustand state + workflow orchestration
+  layouts/      # App layouts (public app layout + admin shell)
+  components/   # UI components and shadcn/ui wrappers
+  hooks/        # reusable hooks
+  lib/          # shared utilities (e.g., supabase client)
+  assets/       # static assets (branding/logos, etc.)
+  constants/
+  types/
+  utils/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Why this separation?
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **services =** Supabase I/O
+- **stores =** state + workflow
+- **pages =** screen composition
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Environment Variables
+
+This app uses Supabase. Create a `.env` file at the project root:
+
+```bash
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+Do not commit `.env` to version control.
+
+## Setup
+
+### 1) Install dependencies
+
+```bash
+npm install
+```
+
+### 2) Run locally
+
+```bash
+npm run dev
+```
+
+Then open the local URL shown in your terminal (commonly `http://localhost:5173`).
+
+## Supabase Setup (quick checklist)
+
+1. Create a Supabase project.
+2. Enable **authentication** for teachers (and admin role as needed).
+3. Create the required tables (at minimum):
+   - `exams`
+   - TOEIC Part 5 questions (MVP)
+   - (plus any supporting tables/columns used by the app)
+4. Configure **RLS policies** so teacher/admin access is enforced.
+5. Add credentials to `.env`:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+
+## Deployment
+
+This project is designed to be deployable on **Vercel**.
+
+1. Connect your GitHub repo to Vercel.
+2. Add environment variables:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. Deploy using your standard Vite+React build settings.
+
+## AI-Assisted Development Disclaimer (Important)
+
+This is a **personal/non-commercial learning project**.
+
+Approximately **99% of the codebase** was developed with assistance from AI tools. AI tools used include:
+
+- **ChatGPT**
+- **Blackbox AI** (Kimi K2.6 model)
+
+The project exists primarily for learning, experimentation, and practicing AI-assisted software development workflows.
+
+## Notes / Limitations
+
+- The current MVP focuses on **TOEIC Reading Part 5**.
+- Teacher/admin routing and exam/question flows are implemented, while student experience uses public/shared exam links.
+- Media handling for question images uses **external `image_url`** values in the MVP (no upload workflow yet).
+
+## License
+
+See repository license (if present). If no license is provided, assume **all rights reserved** by the author.
